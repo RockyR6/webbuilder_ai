@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import {GuestLayout, AuthLayout} from './pages/LayoutPage'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
@@ -26,6 +26,9 @@ const App = () => {
         <Route path="/builder/:id" element={<BuilderPage />} />
         <Route path="/preview/:id" element={<PreviewPage />} />
       </Route>
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate replace to="/" />} />
     </Routes>
 
     

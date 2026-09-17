@@ -9,7 +9,7 @@ export function AuthLayout() {
         return <Loading />
     }
 
-    if (!user) {
+    if (user) {
         return <Navigate to="/login" replace />
     }
 
@@ -23,9 +23,9 @@ export function GuestLayout() {
         return <Loading />
     }
 
-    if (user) {
-        return <Navigate to="/" replace />
-    }
+    // if (user) {
+    //     return <Navigate to="/" replace />
+    // }
 
     return <Outlet />
 }
