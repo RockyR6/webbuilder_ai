@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -8,22 +15,23 @@ const AppContext = createContext(undefined);
 export function AppContextProvider({ children }) {
   const navigate = useNavigate();
 
-  //Auth State
+  // Auth State
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
+  // Projects State
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [activeProject, setActiveProject] = useState(null);
-  const [loadingActiveProject, setLoadingActiveProject] = useState(true);
+  const [loadingActiveProject, setLoadingActiveProject] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [generatingProject, setGeneratingProject] = useState(false);
   const [activeFile, setActiveFile] = useState("/App.js");
   const [showCode, setShowCode] = useState(false);
-  const [loadingProject, setLoadingProject] = useState([])
+  const [loadingProject, setLoadingProject] = useState(false);
 
-  //Auth Actions
-  const checkSession = async () => {
+  // Auth Actions
+  const checkSession = useCallback(async () => {
     try {
       const { data } = await api.get("/api/auth/me");
       setUser(data.user);
@@ -32,28 +40,35 @@ export function AppContextProvider({ children }) {
     } finally {
       setLoadingUser(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkSession();
   }, [checkSession]);
-  //login api
+
+  // Login
   const login = async (email, password) => {
     try {
-      const { data } = await api.post("/api/auth/login", { email, password });
+      const { data } = await api.post("/api/auth/login", {
+        email,
+        password,
+      });
+
       setUser(data.user);
       toast.success("Welcome back!");
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
+
       const errorMsg =
         error?.response?.data?.error || "Invalid email or password";
+
       toast.error(errorMsg);
       throw new Error(errorMsg);
     }
   };
 
-  //register
+  // Register
   const register = async (name, email, password) => {
     try {
       const { data } = await api.post("/api/auth/register", {
@@ -61,34 +76,49 @@ export function AppContextProvider({ children }) {
         email,
         password,
       });
+
       setUser(data.user);
       toast.success("Account created successfully!");
       navigate("/");
     } catch (error) {
       console.error("Registration failed:", error);
-      const errorMsg = error?.response?.data?.error || "Registration failed";
+
+      const errorMsg =
+        error?.response?.data?.error || "Registration failed";
+
       toast.error(errorMsg);
       throw new Error(errorMsg);
     }
   };
 
+  // Logout
   const logout = async () => {
     try {
       await api.post("/api/auth/logout");
+
       setUser(null);
       setProjects([]);
+      setActiveProject(null);
       setActiveFile(null);
+      setChatLoading(false);
+
       toast.success("Logged out successfully");
       navigate("/login");
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error("Logout failed:", error);
       toast.error("Logout failed");
     }
   };
 
-  //Projects Actions
-  const loadProjects = async () => {
-    if (!user) return;
+  // Projects Actions
+  const loadProjects = useCallback(async () => {
+    if (!user) {
+      setLoadingProjects(false);
+      return;
+    }
+
+    setLoadingProjects(true);
+
     try {
       const { data } = await api.get("/api/projects");
       setProjects(data);
@@ -98,84 +128,133 @@ export function AppContextProvider({ children }) {
     } finally {
       setLoadingProjects(false);
     }
-  };
+  }, [user]);
 
-  const loadProject = async (id, silent = false) => {
-    if (!user) return;
-    if (!silent) setLoadingActiveProject(true);
-    try {
-      const { data } = await api.get(`/api/projects/${id}`);
-      setActiveProject(data);
+  const loadProject = useCallback(
+    async (id, silent = false) => {
+      if (!user) return;
 
-      //default file selection
-      const files = Object.keys(data.files);
-      if (files.length > 0) {
-        setActiveFile((prev) => {
-          if (files.includes(prev)) return prev;
-          if (files.includes("/App.js")) return "/App.js";
-          return files[0];
-        });
-      }
-    } catch (error) {
-      console.error("Failed to load project:", error);
       if (!silent) {
-        toast.error("Failed to load project details");
-        navigate("/");
+        setLoadingActiveProject(true);
       }
-    } finally {
-      if (!silent) setLoadingActiveProject(false);
-    }
-  };
 
-  //Automatically poll active project status if generating or pending
+      try {
+        const { data } = await api.get(`/api/projects/${id}`);
+
+        setActiveProject(data);
+
+        // Default file selection
+        const files = Object.keys(data.files || {});
+
+        if (files.length > 0) {
+          setActiveFile((prev) => {
+            if (files.includes(prev)) return prev;
+            if (files.includes("/App.js")) return "/App.js";
+            return files[0];
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load project:", error);
+
+        if (!silent) {
+          toast.error("Failed to load project details");
+          navigate("/");
+        }
+      } finally {
+        if (!silent) {
+          setLoadingActiveProject(false);
+        }
+      }
+    },
+    [user, navigate]
+  );
+
+  // Automatically poll active project status
+  // if generating or pending
   useEffect(() => {
-    if(!activeProject?._id || !user) return;
-
-    const isOngoing = activeProject.status === "generating" || activeProject.status === "pending" || activeProject.status === "revising";
-
-    if(isOngoing){
-        setChatLoading(true)
-        const interval = setInterval(() =>{
-            loadProject(activeProject._id, true)
-        },2000)
-        return () => clearInterval(interval)
-    }else{
-        setChatLoading(false)
+    if (!activeProject?._id || !user) {
+      setChatLoading(false);
+      return;
     }
-  }, [activeProject?._id, activeProject?.status, loadProject, user])
 
+    const isOngoing = [
+      "generating",
+      "pending",
+      "revising",
+    ].includes(activeProject.status);
+
+    if (!isOngoing) {
+      setChatLoading(false);
+      return;
+    }
+
+    setChatLoading(true);
+
+    const interval = setInterval(() => {
+      loadProject(activeProject._id, true);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [
+    activeProject?._id,
+    activeProject?.status,
+    loadProject,
+    user,
+  ]);
+
+  // Generate Project
   const handleGenerate = useCallback(
-    async(prompt) => {
-        if(!user) return;
+    async (prompt) => {
+      if (!user) return;
 
-        setGeneratingProject(true)
-        try {
-            const {data} = await api.post("/api/projects", {prompt})
-            toast.success("AI Agent is planning struture...")
-            navigate(`/builder/${data._id}`)
-        } catch (error) {
-            console.error("Failed to generate project", error);
-            toast.error(error?.response?.data?.error|| "Failed to generate project");
-        }finally{
-            setGeneratingProject(false)
-        }
-    },[navigate, user]
-  )
+      setGeneratingProject(true);
 
+      try {
+        const { data } = await api.post("/api/projects", {
+          prompt,
+        });
+
+        toast.success("AI Agent is planning structure...");
+        navigate(`/builder/${data._id}`);
+      } catch (error) {
+        console.error("Failed to generate project", error);
+
+        toast.error(
+          error?.response?.data?.error ||
+            "Failed to generate project"
+        );
+      } finally {
+        setGeneratingProject(false);
+      }
+    },
+    [navigate, user]
+  );
+
+  // Delete Project
   const handleDelete = useCallback(
-    async(id) => {
-        if(!user) return;
-        try {
-            await api.delete(`/api/projects/${id}`)
-            setProjects((prev) => prev.filter((p) => p._id !== id))
-            toast.success("Project deleted successfully")
-        } catch (error) {
-            console.error("Failed to delete project", error);
-            toast.error("Failed to delete project");
+    async (id) => {
+      if (!user) return;
+
+      try {
+        await api.delete(`/api/projects/${id}`);
+
+        setProjects((prev) =>
+          prev.filter((project) => project._id !== id)
+        );
+
+        if (activeProject?._id === id) {
+          setActiveProject(null);
+          setActiveFile(null);
         }
-        
-    },[user]
-  )
+
+        toast.success("Project deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete project", error);
+        toast.error("Failed to delete project");
+      }
+    },
+    [user, activeProject?._id]
+  );
 
   return (
     <AppContext.Provider
@@ -184,22 +263,33 @@ export function AppContextProvider({ children }) {
         setUser,
         loadingUser,
         setLoadingUser,
+
         login,
         register,
+        logout,
+        checkSession,
+
         projects,
+        loadProjects,
+        loadingProjects,
+
         loadProject,
         activeProject,
         loadingActiveProject,
+
         chatLoading,
         generatingProject,
         activeFile,
-        showCode,
         setActiveFile,
+
+        showCode,
         setShowCode,
-        loadProject,
+
         loadingProject,
+        setLoadingProject,
+
         handleGenerate,
-        handleDelete
+        handleDelete,
       }}
     >
       {children}
@@ -210,8 +300,12 @@ export function AppContextProvider({ children }) {
 // Custom hook to use the AppContext
 export function useAppContext() {
   const context = useContext(AppContext);
+
   if (context === undefined) {
-    throw new Error("useAppContext must be used within a AppContextProvider");
+    throw new Error(
+      "useAppContext must be used within an AppContextProvider"
+    );
   }
+
   return context;
 }
