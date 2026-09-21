@@ -1,9 +1,14 @@
 import { useState } from "react";
 import LoginLeft from "../components/LoginLeft";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
+import { useAppContext } from "../context/AppContext";
 
 const AuthPage = ({ mode }) => {
+
+  const {login, register} = useAppContext()
+  const navigate = useNavigate()
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -12,6 +17,26 @@ const AuthPage = ({ mode }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const isLogin = mode === "login";
+
+  const handleSubmit = async(e) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      if(mode === "login"){
+        await login(email, password)
+      }else{
+        await register(name, email, password)
+      }
+      navigate("/")
+    } catch (error) {
+      setError(error.message || (mode === "login" ? "Invalid email or password" : "Registration failed"))
+    }finally{
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white flex text-zinc-900 font-sans">
       {/* Left Panel - Branding */}
@@ -35,7 +60,7 @@ const AuthPage = ({ mode }) => {
               {error}
             </div>
           )}
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {!isLogin && (
               <div className="pt-10">
                 <label className="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wide mb-2">
