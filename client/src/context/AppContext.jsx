@@ -259,6 +259,27 @@ export function AppContextProvider({ children }) {
     [user, activeProject?._id]
   );
 
+  const handleChat = useCallback(
+    async (prompt) => {
+      if(!activeProject || ! user) return
+      setChatLoading(true)
+      try {
+        const {data} = await api.post(`/api/projects/${activeProject._id}/chat`,{prompt})
+        setActiveProject(data)
+        if(data.error && data.error.length > 0){
+          toast.error(`${data.error.length} revision patch(es) failed`)
+        }else{
+          toast.success(`Update to version ${data.version}`)
+        }
+      } catch (cerror){
+        console.error("Revision request failed:", error)
+          toast.error(error?.response?.error || "Revision request failed")
+      }finally{
+        setChatLoading(false)
+      }
+    },[activeProject, user]
+  )
+
   return (
     <AppContext.Provider
       value={{

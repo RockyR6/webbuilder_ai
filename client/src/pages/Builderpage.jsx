@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from 'react'
-import { useAppContext } from '../context/AppContext'
-import { useNavigate, useParams } from 'react-router-dom'
-import Loading from '../components/Loading'
-import BuilderHeader from '../components/BuilderHeader'
-import { MessageSquareIcon } from 'lucide-react'
+import React, { useEffect, useState } from "react";
+import { useAppContext } from "../context/AppContext";
+import { useNavigate, useParams } from "react-router-dom";
+import Loading from "../components/Loading";
+import BuilderHeader from "../components/BuilderHeader";
+import { MessageSquareIcon } from "lucide-react";
+import ChatPanel from "../components/ChatPanel";
 
 const Builderpage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const { id } = useParams()
-  const navigate = useNavigate()
-
-  const [leftTab, setLeftTab] = useState("chat")
-  const [publishing, setPublishing] = useState(false)
-  const [publishUrl, setPublishUrl] = useState(null)
+  const [leftTab, setLeftTab] = useState("chat");
+  const [publishing, setPublishing] = useState(false);
+  const [publishUrl, setPublishUrl] = useState(null);
+ 
 
   const {
     activeProject,
@@ -22,50 +23,50 @@ const Builderpage = () => {
     setActivefile,
     setShowCode,
     loadProject,
-    logout
-  } = useAppContext()
+    logout,
+    chatLoading,
+    handleChat
+  } = useAppContext();
+
+
+
 
   useEffect(() => {
-    if (!id) return
-    loadProject(id)
-  }, [id, loadProject])
+    if (!id) return;
+    loadProject(id);
+  }, [id, loadProject]);
 
   useEffect(() => {
-    if (!id || !activeProject) return
+    if (!id || !activeProject) return;
 
     if (
       activeProject.status === "pending" ||
       activeProject.status === "generating"
     ) {
       const interval = setInterval(() => {
-        loadProject(id, true)
-      }, 1500)
+        loadProject(id, true);
+      }, 1500);
 
-      return () => clearInterval(interval)
+      return () => clearInterval(interval);
     }
-  }, [id, loadProject, activeProject])
+  }, [id, loadProject, activeProject]);
 
   const handleOpenPreview = () => {
-    if (!id) return
+    if (!id) return;
 
-    window.open(`/preview/${id}`, "_blank")
-  }
+    window.open(`/preview/${id}`, "_blank");
+  };
 
-  const handlePublish = async () => {
+  const handlePublish = async () => {};
 
-  }
-
-  const handleDownload = () => {
-
-  }
+  const handleDownload = () => {};
 
   if (loadingActiveProject || !activeProject) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
-    <div className='h-screen flex flex-col bg-white overflow-hidden text-zinc-900 relative'>
-
+    <div className="h-screen flex flex-col bg-white overflow-hidden text-zinc-900 relative">
       <BuilderHeader
         projectName={activeProject.name}
         version={activeProject.version}
@@ -79,12 +80,9 @@ const Builderpage = () => {
         onLogout={logout}
       />
 
-      <div className='flex-1 flex overflow-hidden'>
-
-        <div className='w-[320px] shrink-0 flex flex-col border-r border-zinc-200 bg-white'>
-
-          <div className='flex border-b border-zinc-100'>
-
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-[320px] shrink-0 flex flex-col border-r border-zinc-200 bg-white">
+          <div className="flex border-b border-zinc-100">
             <button
               onClick={() => setLeftTab("chat")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium cursor-pointer ${
@@ -107,18 +105,21 @@ const Builderpage = () => {
               <MessageSquareIcon size={13} />
               Files
             </button>
-
           </div>
-
+          {/* sidebar content */}
+          <div className="flex-1 overflow-hidden">
+            {
+              leftTab === 'chat' ? (
+                <ChatPanel messages={activeProject.messages} onSend={handleChat} loading={chatLoading}/>
+              ) : (
+                <div>FileExplorer</div>
+              )
+            }
+          </div>
         </div>
-
-        <div className='flex-1 overflow-hidden'>
-        </div>
-
       </div>
-
     </div>
-  )
-}
+  );
+};
 
-export default Builderpage
+export default Builderpage;
