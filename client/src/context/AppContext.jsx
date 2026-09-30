@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import api from "../api/api";
@@ -271,13 +272,37 @@ export function AppContextProvider({ children }) {
         }else{
           toast.success(`Update to version ${data.version}`)
         }
-      } catch (cerror){
+      } catch (error){
         console.error("Revision request failed:", error)
           toast.error(error?.response?.error || "Revision request failed")
       }finally{
         setChatLoading(false)
       }
     },[activeProject, user]
+  )
+
+  const debouncedSave = useMemo(() =>
+    debounce(async(files, id) =>{
+      try {
+        await api.put(`/api/projects/${id}/files`, {files})
+      } catch (error) {
+        console.error("Failed to auto-save files:", error)
+        toast.error("Failed to save code modifications")
+      }
+    }, 1000),[],
+  )
+
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel()
+    }
+  },[debouncedSave])
+
+  const updateProjectFiles = useCallback(
+    async (files) => {
+      if(!activeProject || !user) return;
+      debouncedSave(files, activeProject._id)
+    }, [activeProject, user, debouncedSave]
   )
 
   return (
@@ -314,6 +339,8 @@ export function AppContextProvider({ children }) {
 
         handleGenerate,
         handleDelete,
+
+        updateProjectFiles,
       }}
     >
       {children}
