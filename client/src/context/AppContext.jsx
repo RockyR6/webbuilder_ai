@@ -49,7 +49,7 @@ export function AppContextProvider({ children }) {
 
   useEffect(() => {
     checkSession();
-  }, [checkSession]);
+  }, []);
 
   // Login
   const login = async (email, password) => {
@@ -152,12 +152,26 @@ export function AppContextProvider({ children }) {
         const files = Object.keys(data.files || {});
 
         if (files.length > 0) {
-          setActiveFile((prev) => {
-            if (files.includes(prev)) return prev;
-            if (files.includes("/App.js")) return "/App.js";
-            return files[0];
-          });
-        }
+  setActiveFile((prev) => {
+    if (prev && files.includes(prev)) {
+      return prev;
+    }
+
+    if (files.includes("/src/App.jsx")) {
+      return "/src/App.jsx";
+    }
+
+    if (files.includes("/App.jsx")) {
+      return "/App.jsx";
+    }
+
+    if (files.includes("/App.js")) {
+      return "/App.js";
+    }
+
+    return files[0];
+  });
+}
       } catch (error) {
         console.error("Failed to load project:", error);
 
