@@ -8,6 +8,10 @@ import ChatPanel from "../components/ChatPanel";
 import FileExplorer from "../components/FileExplorer";
 import PreviewPanel from "../components/PreviewPanel";
 import AgentProgressDashboard from "../components/AgentProgressDashboard";
+import PublishModal from "../components/PublishModal";
+import toast from "react-hot-toast";
+import { exportProjectZip } from "../utils/exportProject";
+import api from "../api/api";
 
 const Builderpage = () => {
   const { id } = useParams();
@@ -60,9 +64,26 @@ const Builderpage = () => {
     window.open(`/preview/${id}`, "_blank");
   };
 
-  const handlePublish = async () => {};
+  const handlePublish = async () => {
+    if (!id) return;
+    setPublishing(true);
+    try {
+      await api.post(`/api/projects/${id}/publish`);
+      const url = `${window.location.origin}/publish/${id}`;
+      setPublishUrl(url);
+      toast.success("Website published successfully!")
+    } catch (error) {
+      console.error("Error publishing project:", error);
+      toast.error(error?.response?.data?.error||"Failed to publish website.")
+    }finally {
+      setPublishing(false);
+    }
+  };
 
-  const handleDownload = () => {};
+  const handleDownload = () => {
+    if(!activeProject) return;
+    exportProjectZip(activeProject)
+  };
 
   if (loadingActiveProject || !activeProject) {
     return <Loading />;
@@ -133,6 +154,7 @@ const Builderpage = () => {
           )}
         </div>
       </div>
+      {publishUrl && <PublishModal publishUrl={publishUrl} onClose={() => setPublishUrl(null)}/>}
     </div>
   );
 };
