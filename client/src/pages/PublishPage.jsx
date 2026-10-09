@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/api';
+import Loading from '../components/Loading';
+import { AlertCircleIcon } from 'lucide-react';
+import FullPagePreview from '../components/FullPagePreview';
 
 const PublishPage = () => {
   const {id} = useParams();
-  const [projectId, setProject] = useState(null);
+  const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -22,11 +25,27 @@ const PublishPage = () => {
       setLoading(false);
      }
     }
+    fetchPublicProject();
   },[id])
+
+  if(loading) {
+    return <Loading/>
+  }
+
+  if(error || !project){
+    return (
+      <div className='h-screen w-screen flex flex-col items-center justify-center bg-zinc-50 px-4 text-center'>
+        <div className='w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 mb-4'>
+          <AlertCircleIcon size={24}/>
+        </div>
+        <h1 className='text-lg font-semibold text-zinc-900 mb-1.5'>Error</h1>
+        <p className='text-sm text-zinc-500 max-w-sm leading-relaxed mb-6'>{error || "Project not found."}</p>
+        <div className='text-[10px] font-semibold uppercase tracking-widest text-zinc-400'>WebBuilderAI</div>
+      </div>
+    )
+  }
   return (
-    <div>
-      PublishPage
-    </div>
+    <FullPagePreview files={project.files}/>
   )
 }
 

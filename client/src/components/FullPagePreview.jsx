@@ -1,46 +1,60 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  SandpackLayout,
+  SandpackPreview,
+  SandpackProvider,
+} from "@codesandbox/sandpack-react";
 import { detectDependencies } from "../utils/sandpackUtils";
-import { SandpackPreview } from "@codesandbox/sandpack-react";
+
+const withSlash = (path) => (path.startsWith("/") ? path : `/${path}`);
 
 const FullPagePreview = ({ files }) => {
-  const [showErrorOverlay, setShowErrorOverlay] = useState(true);
 
-  // convert liveFiles to Sandpack format (leading slashes required)
+  const [showErrorOverlay] = useState(true);
+
   const sandpackFiles = useMemo(() => {
     if (!files || !Object.keys(files).length) return {};
 
-    const spFiles = {};
-    const active = activeFile ? withSlash(activeFile) : null;
+    const result = {};
     for (const [path, content] of Object.entries(files)) {
-      const pathWithSlash = withSlash(path);
-      spFiles[pathWithSlash] = { code: content };
+      result[withSlash(path)] = {
+        code: typeof content === "string" ? content : content?.content ?? content?.code ?? "",
+      };
     }
-    return spFiles;
+    return result;
   }, [files]);
 
-  // pick a template based on the file layout so Sandpack has an entry point
   const template = useMemo(() => {
     const keys = Object.keys(sandpackFiles);
+
     const isVite =
-      keys.some(
-        (k) =>
-          k === "/src/main.jsx" ||
-          k === "/src/main.js" ||
-          k === "/src/main.tsx",
+      keys.some((path) =>
+        [
+          "/src/main.jsx",
+          "/src/main.js",
+          "/src/main.tsx",
+          "/src/main.ts",
+        ].includes(path)
       ) || keys.includes("/vite.config.js");
+
     return isVite ? "vite-react" : "react";
   }, [sandpackFiles]);
 
-  const dependencies = useMemo(() => {
-    if (!files) return {};
-    return detectDependencies(files);
-  }, [files]);
+  const dependencies = useMemo(
+    () => (files ? detectDependencies(files) : {}),
+    [files]
+  );
 
-  // avoid initializing Sandpack with no files
-  if (!Object.keys(sandpackFiles).length) return null;
+  if (!Object.keys(sandpackFiles).length) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        No project files found.
+      </div>
+    );
+  }
 
   return (
-    <div className="h-screen w-screen bg-white overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden bg-white">
       <SandpackProvider
         template={template}
         files={sandpackFiles}
@@ -52,30 +66,22 @@ const FullPagePreview = ({ files }) => {
           ],
           logLevel: 0,
         }}
-        className="h-full w-full"
-        
       >
-    
-
         <SandpackLayout
-          className="h-full w-full border-none! bg-transparent! "
+          style={{
+            height: "100%",
+            width: "100%",
+            border: "none",
+            borderRadius: 0,
+          }}
         >
-          {showCode && (
-            <SandpackCodeEditor
-              showTabs
-              showLineNumbers
-              showInlineErrors
-              wrapContent
-              className="h-full w-full"
-            />
-          )}
           <SandpackPreview
             showNavigator={false}
             showRefreshButton={false}
             showOpenInCodeSandbox={false}
             showOpenInStackBlitz={false}
             showSandpackErrorOverlay={showErrorOverlay}
-            className="h-full w-full"
+            style={{ height: "100%", width: "100%" }}
           />
         </SandpackLayout>
       </SandpackProvider>
