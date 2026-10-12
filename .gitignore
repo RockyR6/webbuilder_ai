@@ -1,0 +1,30 @@
+# Node / npm
+node_modules/
+.npm/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build output
+/dist/
+/build/
+coverage/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Optional: lockfiles can be committed or ignored depending on project preference
+# package-lock.json
+# yarn.lock
