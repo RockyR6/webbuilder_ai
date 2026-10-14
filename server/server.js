@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
+import authRouter from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -10,13 +11,14 @@ dotenv.config();
 const app = express();
 
 //Data base connection
-connectDB();
+await connectDB();
 
 app.use(cors({origin: process.env.ORIGINS.split(","), credentials: true}));
 app.use(cookieParser());
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("Server is running"));
+app.use("/api/auth", authRouter)
 
 // centralized error handler
 app.use((err, _req, res, _next) => {

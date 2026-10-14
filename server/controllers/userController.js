@@ -1,11 +1,11 @@
-import { User } from "./models/User";
+import { User } from "../models/User";
 import jwt from "jsonwebtoken";
 
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback__secret";
 
 //helper to set cookie
-const setSessionCookie = (res, token) => {
+const setSessionCookie = (res, payload) => {
     const token = jwt.sign(payload, JWT_SECRET, {expiresIn: "30d"});
     res.cookie("token", token, {
         httpOnly: true,
