@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./config/db.js";
 import authRouter from "./routes/authRoutes.js";
+import projectRouter from "./routes/projectRoutes.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.get("/", (req, res) => res.send("Server is running"));
 app.use("/api/auth", authRouter)
+app.use("/api/projects", projectRouter)
 
 // centralized error handler
 app.use((err, _req, res, _next) => {
