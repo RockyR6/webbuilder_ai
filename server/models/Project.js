@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 
-
 const MessageSchema = new Schema({
     role: {
         type: String,
@@ -10,13 +9,8 @@ const MessageSchema = new Schema({
     content: {
         type: String,
         required: true
-    },
-    timestamps: {
-        type: Date,
-        default: Date.now
     }
-},{_id: false})
-
+}, { _id: false, timestamps: true })
 
 const PlannedFileSchema = new Schema({
     path: {
@@ -27,37 +21,37 @@ const PlannedFileSchema = new Schema({
         type: String,
         required: true
     }
-},{_id: false})
+}, { _id: false })
 
 const ProjectSchema = new Schema({
-    name:{
+    name: {
         type: String,
         required: true,
         default: "Untitled Project"
     },
     description: {
-        trpe: String,
-        default: "",
+        type: String,
+        default: ""
     },
     files: {
         type: Schema.Types.Mixed,
         default: {}
     },
     messages: {
-        type: [MessageSchema], 
+        type: [MessageSchema],
         default: []
     },
     version: {
-        type: Number, 
+        type: Number,
         default: 0
     },
     owner: {
         type: Schema.Types.ObjectId,
-        ref: "User", 
-        required: true,
+        ref: "User",
+        required: true
     },
     published: {
-        type: Boolean, 
+        type: Boolean,
         default: false
     },
     status: {
@@ -66,21 +60,21 @@ const ProjectSchema = new Schema({
         default: "pending"
     },
     filesPlanned: {
-        type: [PlannedFileSchema], 
+        type: [PlannedFileSchema],
         default: []
     },
     filesGenerated: {
-        type: String, 
+        type: [String],
         default: []
     },
     currentFile: {
-        type: String, 
+        type: String,
         default: null
     },
     error: {
-        type: String, 
+        type: String,
         default: null
-    },
-},{timestamps: true})
+    }
+}, { timestamps: true })
 
 export const Project = mongoose.model("Project", ProjectSchema)

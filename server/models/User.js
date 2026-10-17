@@ -1,5 +1,6 @@
 import {Schema} from "mongoose"; 
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 
 
 

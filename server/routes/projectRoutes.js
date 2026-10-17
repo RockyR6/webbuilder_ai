@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { createProject, deleteProjects, getProject, getPublicProjectFiles, listProjects, publishProject, updateProjectFiles } from "../controllers/projectController";
-import { authMiddleware } from "../middlewares/authMiddleware";
+import { createProject, deleteProjects, getProject, getPublicProjectFiles, listProjects, publishProject, updateProjectFiles } from "../controllers/projectController.js";
+import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 
 const projectRouter = Router();
