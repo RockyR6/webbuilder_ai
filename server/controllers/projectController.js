@@ -1,5 +1,8 @@
 import { Project } from "../models/Project.js";
 import crypto from "crypto";
+import { generateProject } from "../services/ai.js";
+import { timeStamp } from "console";
+import path from "path";
 
 
 
@@ -63,9 +66,83 @@ export async function createProject(req, res) {
 
 // Background worker to progressive generate files and update database in real-time.
 async function runBackgroundGeneration(projectId, prompt) {
-    
-}
+    try {
+        console.log(`[Background AI] Starting generation for project ${projectId}`)
+        const result = await generateProject(prompt, {
+            onPlan: async (plan) => {
+                const fileList = plan.files.map((f)=> `- \`${f.path}\`: ${f.description}`).join("\n")
 
+                await Project.findByIdAndUpdate(projectId, {
+                    name: plan.projectName || "Generated Project",
+                    status: "generating",
+                    filesPlanned: plan.files,
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: `Planned website structure:\n${fileList}`,
+                            timeStamp: new Date(),
+                        }
+                    }
+                })
+            },
+            onFileStart: async (path)=> {
+                console.log(`[Background AI] Starting file ${path} for project ${projectId}`)
+                await Project.findByIdAndUpdate(projectId, {
+                    currentFile: path,
+                })
+            },
+            onFileComplete: async (path, code) => {
+                console.log(`[Background AI] Finished file ${path} for project ${projectId}`)
+
+                const project = await Project.findById(projectId)
+
+                if(project){
+                    project.files = project.files || {};
+                    project.files[path] = {content: code, hash: hashContent(code)}
+                    project.filesGenerated = [...(project.filesGenerated || []), path]
+                    project.messages.push({
+                        role: "assistant",
+                        content: `Created file "${path}"`,
+                        timeStamp: new Date()
+                    })
+                    project.currentFile = null;
+                    project.markModified("files")
+                    await project.save();
+                }
+            }
+        })
+
+        console.log(`[Background AI] Successfully generated project ${projectId}`)
+
+        const project = await Project.findById(projectId)
+        if(project){
+            project.status = "completed";
+            project.version = 1;
+            if(result.description){
+                project.name = result.description;
+            }
+            project.messages.push({
+                role: "assistant",
+                content: `Website generation complete! You can view and edit the files.`,
+                timeStamp: new Date()
+            })
+            await project.save()
+        }
+    } catch (error) {
+        console.error(`[Background AI] Fatal generation error for project ${projectId}:`, error)
+        await Project.findByIdAndUpdate(projectId, {
+            status: "failed",
+            error: error.message,
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: `❌ Generation failed: ${error.message}`,
+                    timeStamp: new Date(),
+                }
+            }
+        })
+    }
+}
 // GET /api/projects
 // List all projects owned by the user (summary only, no file contents).
 export async function listProjects(req, res) {
