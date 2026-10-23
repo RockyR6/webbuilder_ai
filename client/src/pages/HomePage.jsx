@@ -1,66 +1,93 @@
-import { useEffect } from "react"
-import { homeTags } from "../assets/assets"
-import Promptinput from "../components/Promptinput"
-import {useAppContext} from "../context/AppContext" 
-import { useNavigate } from "react-router-dom"
-import { ArrowRightIcon, ClockIcon, Trash2Icon } from "lucide-react"
-import moment from "moment"
+import { useEffect } from "react";
+import { homeTags } from "../assets/assets";
+import Promptinput from "../components/Promptinput";
+import { useAppContext } from "../context/AppContext";
+import { useNavigate } from "react-router-dom";
+import { ArrowRightIcon, ClockIcon, Trash2Icon } from "lucide-react";
+import moment from "moment";
 
-const HomePage = () => { 
+const HomePage = () => {
+  const navigate = useNavigate();
 
-  const navigate = useNavigate()
+  const {
+    user,
+    loadingUser,
+    projects,
+    loadProjects,
+    loadingProjects,
+    generatingProject,
+    handleGenerate,
+    handleDelete,
+    logout,
+  } = useAppContext();
 
-  const {user, projects, loadProjects, loadingProjects, generatingProject, handleGenerate, handleDelete, logout} = useAppContext() 
+  useEffect(() => {
+    if (!loadingUser && user) {
+      loadProjects();
+    }
+  }, [loadingUser, user, loadProjects]);
 
-
-  useEffect(() =>{
-    loadProjects()
-  },[loadProjects])
-
-  return ( 
+  return (
     // Added flex flex-col so flex-1 works, and fixed font-sans typo
-    <div className='h-screen flex flex-col overflow-y-scroll text-white font-sans bg-[url("/bg-img.png")] bg-cover bg-center bg-no-repeat'> 
-      
-      {/* Navbar */} 
-      <nav className='sticky top-0 z-10 flex items-center justify-between px-6 py-4'> 
-        <div className='flex text-center gap-2'> 
-          <img src="/logo.svg" alt="logo" className='size-6'/> 
-          <span className='text-xl font-semibold tracking-tight'>WebBuilder</span> 
-        </div> 
-        <div className="flex items-center gap-4 text-sm font-medium text-zinc-300"> 
-          <span>{user?.name}</span> 
-          <button onClick={logout} className="py-1.5 px-3 border border-white/20 text-white hover:bg-white/10 text-xs rounded-md cursor-pointer bg-transparent"> 
-            Sign out 
-          </button> 
-        </div> 
-      </nav> 
+    <div className='h-screen flex flex-col overflow-y-scroll text-white font-sans bg-[url("/bg-img.png")] bg-cover bg-center bg-no-repeat'>
+      {/* Navbar */}
+      <nav className="sticky top-0 z-10 flex items-center justify-between px-6 py-4">
+        <div className="flex text-center gap-2">
+          <img src="/logo.svg" alt="logo" className="size-6" />
+          <span className="text-xl font-semibold tracking-tight">
+            WebBuilder
+          </span>
+        </div>
+        <div className="flex items-center gap-4 text-sm font-medium text-zinc-300">
+          <span>{user?.name}</span>
+          <button
+            onClick={logout}
+            className="py-1.5 px-3 border border-white/20 text-white hover:bg-white/10 text-xs rounded-md cursor-pointer bg-transparent"
+          >
+            Sign out
+          </button>
+        </div>
+      </nav>
 
-      {/* Hero section */} 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 mt-8 xl:mt-28"> 
-        <div className="w-full max-w-2xl flex flex-col items-center"> {/* Added flex here to properly center items inside */}
-          {/* Promo Badge */} 
-          <div className="flex items-center gap-2 p-1.5 pr-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[13px] text-white/90"> 
-            <span className="px-3 py-1 text-[11px] bg-red-700 rounded-full font-medium tracking-wider">PROMO</span> 
-            <span>Create your first project for free.</span> 
-          </div> 
-
+      {/* Hero section */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20 mt-8 xl:mt-28">
+        <div className="w-full max-w-2xl flex flex-col items-center">
+          {" "}
+          {/* Added flex here to properly center items inside */}
+          {/* Promo Badge */}
+          <div className="flex items-center gap-2 p-1.5 pr-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[13px] text-white/90">
+            <span className="px-3 py-1 text-[11px] bg-red-700 rounded-full font-medium tracking-wider">
+              PROMO
+            </span>
+            <span>Create your first project for free.</span>
+          </div>
           {/* Title */}
           <h1 className="text-center text-4xl md:text-6xl font-medium mt-4 max-w-2xl text-white">
             Let me help you to build your web
           </h1>
           <p className="text-center text-sm md:text-base max-w-xl mt-4 text-white/65 leading-relaxed">
-            Without coding you can build your webpage, just describe your idea and watch AI design.
+            Without coding you can build your webpage, just describe your idea
+            and watch AI design.
           </p>
           {/* Prompt inputwith glassmorphic variant */}
           <div className="w-full mt-6">
-            <Promptinput onSubmit={handleGenerate} loading={generatingProject} placeholder="Create a portfolio website..." variant="glass" autoFocus/>
+            <Promptinput
+              onSubmit={handleGenerate}
+              loading={generatingProject}
+              placeholder="Create a portfolio website..."
+              variant="glass"
+              autoFocus
+            />
           </div>
           {/* scrolling marquee tags */}
           <div className="masked-marquee w-full mt-4 max-w-2xl overflow-hidden py-1">
             <div className="animate-marquee gap-3">
-              {homeTags.map((tag, i) =>(
-                <button key={i} onClick={()=>handleGenerate(tag)} disabled={generatingProject}
-                className="px-4 py-1.5 border rounded-full text-sm text-white bg-white/10 border-white/25 hover:bg-white/20 transition cursor-pointer shrink-0 font-medium"
+              {homeTags.map((tag, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleGenerate(tag)}
+                  disabled={generatingProject}
+                  className="px-4 py-1.5 border rounded-full text-sm text-white bg-white/10 border-white/25 hover:bg-white/20 transition cursor-pointer shrink-0 font-medium"
                 >
                   {tag}
                 </button>
@@ -71,43 +98,59 @@ const HomePage = () => {
           {!loadingProjects && projects.length > 0 && (
             <div className="mt-12 w-full">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-                <p className="text-xs font-medium uppercase text-zinc-100 tracking-widest">All Projects</p>
+                <p className="text-xs font-medium uppercase text-zinc-100 tracking-widest">
+                  All Projects
+                </p>
                 <span className="text-xs text-zinc-100 font-normal">
-                  {projects.length} {projects.length === 1 ? "project" : "projects"}
+                  {projects.length}{" "}
+                  {projects.length === 1 ? "project" : "projects"}
                 </span>
               </div>
-                <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-1">
-                  {projects.map((p) =>(
-                    <div key={p._id} onClick={()=>navigate(`/builder/${p._id}`)}
-                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 flex text-center justify-between group hover:border-white/20 hover:bg-white/10 cursor-pointer backdrop-blur-md transition-all">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{p.name}</p>
-                          <div className="flex items-center gap-3 mt-0.5">
-                            <span className="text-xs text-zinc-300 flex items-center gap-1">
-                              <ClockIcon size={10}/>
-                              {moment(p.updatedAt || p.createAt).fromNow()}
-                            </span>
-                            <span className="text-xs text-white/60 font-medium">v{p.version}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button onClick={(e)=> {
-                            e.stopPropagation()
-                            handleDelete(p._id)
-                          }}
-                          className="p-1.5 rounded-md text-zinc-200 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2Icon size={14}/></button>
-                          <ArrowRightIcon size={14} className="text-zinc-200 group-hover:text-white"/>
-                        </div>
+              <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-1">
+                {projects.map((p) => (
+                  <div
+                    key={p._id}
+                    onClick={() => navigate(`/builder/${p._id}`)}
+                    className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 flex text-center justify-between group hover:border-white/20 hover:bg-white/10 cursor-pointer backdrop-blur-md transition-all"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {p.name}
+                      </p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-xs text-zinc-300 flex items-center gap-1">
+                          <ClockIcon size={10} />
+                          {moment(p.updatedAt || p.createAt).fromNow()}
+                        </span>
+                        <span className="text-xs text-white/60 font-medium">
+                          v{p.version}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(p._id);
+                        }}
+                        className="p-1.5 rounded-md text-zinc-200 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2Icon size={14} />
+                      </button>
+                      <ArrowRightIcon
+                        size={14}
+                        className="text-zinc-200 group-hover:text-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-        </div> 
-      </div> 
+        </div>
+      </div>
+    </div>
+  );
+};
 
-    </div> 
-  ) 
-} 
-
-export default HomePage
+export default HomePage;
