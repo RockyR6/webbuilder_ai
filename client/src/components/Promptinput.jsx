@@ -78,7 +78,7 @@ const Promptinput = ({
             <button
               disabled={!value.trim() || loading}
               type="submit"
-              className="flex items-center justify-center p-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 cursor-pointer"
+              className="flex items-center justify-center p-1.5 rounded-full bg-red-700 text-white hover:bg-red-700 disabled:opacity-40 cursor-pointer"
             >
               {loading ? (
                 <Loader2Icon size={18} className="animate-spin" />
