@@ -9,11 +9,9 @@ import projectRouter from "./routes/projectRoutes.js";
 
 const app = express();
 
-await connectDB();
-
 app.use(
   cors({
-    origin: (process.env.ORIGINS || "http://localhost:5173")
+    origin: (process.env.ORIGINS || "https://webbuilder-ai-sigma.vercel.app")
       .split(",")
       .map((o) => o.trim()),
     credentials: true,
@@ -32,6 +30,8 @@ app.use((err, _req, res, _next) => {
   console.error("[Error]", err.message);
   res.status(err.status || 500).json({ error: err.message });
 });
+
+await connectDB();
 
 const port = process.env.PORT || 3000;
 
